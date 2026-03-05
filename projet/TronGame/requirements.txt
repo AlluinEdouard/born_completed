@@ -1,0 +1,12 @@
+# Dépendances pour le jeu Tron
+# Moteur de jeu principal
+pygame>=2.5.0
+
+# Optionnel: pour des effets sonores avancés (si besoin futur)
+# pydub>=0.25.1
+
+# Optionnel: pour la génération d'images (utilisé dans utils/)
+# Pillow>=10.0.0
+
+# Optionnel: pour l'analyse de performance
+# psutil>=5.9.0

@@ -1,0 +1,12 @@
+unnamed package
+javazoom.jl.converter
+javazoom.jl.decoder
+javazoom.jl.player
+javazoom.jl.player.advanced
+MG2D
+MG2D.audio
+MG2D.audio.converter
+MG2D.audio.decoder
+MG2D.audio.player
+MG2D.audio.player.advanced
+MG2D.geometrie

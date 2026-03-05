@@ -1,0 +1,5 @@
+Casse brique - Équipe MG2D - 2013
+
+Jeu faisant partie des démos de la
+bibliothèque MG2D. Jeu classique de
+casse brique.

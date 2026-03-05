@@ -1,0 +1,3 @@
+Minesweeper - Mathilde Henrion et Johan Pezo - 2025
+
+Le célèbre jeu de démineur, où il faut découvrir les cases sans faire exploser de mines.

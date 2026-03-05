@@ -1,0 +1,8 @@
+Shoot'em up - Nicolas Choquet - 2017
+
+Revivez les aventures du jeune Luke Skywalker
+en approche de l'étoile de la mort. Défoncez
+vos adversaires pour enfin détruire l'arme ultime.
+(Le passage de l'étoile de la mort n'a pas été codé
+alors, on fait comme si elle se trouve très
+très loin. OK ?)

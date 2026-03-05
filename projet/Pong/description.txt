@@ -1,0 +1,7 @@
+Pong - Rémi Synave - 2013
+
+Premier jeu programmé grâce à la bibliothèque
+MG2D pour illustrer toute la puissance de
+celle-ci. Jeu particulièrement bien codé avec une
+musique entraînante.
+

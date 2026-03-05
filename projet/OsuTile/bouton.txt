@@ -1,0 +1,1 @@
+Movement:aucun:Lane 1:Lane 2:Pause:Selectionner/Reprendre:Quitter:Interagir:aucun:Retour:aucun:aucun

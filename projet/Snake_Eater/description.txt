@@ -1,0 +1,5 @@
+Snake - Équipe MG2D - 2013
+
+Jeu classique de Snake où il faut manger un
+maximum de pommes. Si vous perdez trop
+rapidement, le jeu se moquera de vous !

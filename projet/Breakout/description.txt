@@ -1,0 +1,23 @@
+Breakout - version borne arcade (pygame)
+
+But du jeu:
+Controlez la barre en bas pour renvoyer la balle.
+Cassez toutes les briques pour passer au niveau suivant.
+Ne laissez jamais la balle tomber, sinon vous perdez une vie.
+
+Bonus:
+- W : barre plus large temporairement
+- L : +1 vie
+- S : balle ralentie
+
+Interface complete:
+- Menu principal
+- Pause
+- Highscores persistants
+- Pseudo sur 4 lettres (score conserve si meilleur)
+
+Commandes:
+- Deplacement: Fleches gauche/droite ou Q/D
+- Lancer/Valider: G / R / Entree / Espace
+- Pause: T ou P
+- Retour/Quitter: F / H / Echap

@@ -1,0 +1,10 @@
+site_name: Documentation Borne d'Arcade IUT
+theme:
+  name: material
+
+nav:
+  - Accueil: index.md
+  - Guide Utilisateur: user_guide.md
+  - Installation: install.md
+  - Ajouter un jeu: add_game.md
+  - Documentation Technique (Code): api/index.html

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Borne Arcade
+Comment=Lance la borne arcade au demarrage
+Exec=/usr/bin/lxterminal -e /bin/bash -lc "$HOME/.local/bin/borne_arcade_start.sh"
+Icon=utilities-terminal
+NotShowIn=GNOME;KDE;
+Hidden=false
+Terminal=false
+X-KeepTerminal=false
+X-GNOME-Autostart-enabled=true
+StartupNotify=false

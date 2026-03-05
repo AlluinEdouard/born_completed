@@ -1,0 +1,8 @@
+DinoRail - DUFEUTREL Thibaut - 2025
+
+Jeu classique se basant sur le fameux
+jeu du dino de Google utilisant la bibliothèque MG2D
+
+Crédits:
+cabled_mess (pour le son du jump)
+JuanD20 (pour le son de l'"accroupissement")

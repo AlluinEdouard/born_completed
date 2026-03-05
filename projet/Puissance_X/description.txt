@@ -1,0 +1,7 @@
+Puissance 4 - Florentin Magniez - 2018
+
+Le très célèbre jeu de stratégie !
+Ici, tout est paramétrable : nombre de
+joueurs et nombre de pions à àligner.
+Vous pourrez également jouer contre des
+Intelligences Artificielles. De 2 à 4 joueurs !

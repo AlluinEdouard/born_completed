@@ -1,0 +1,13 @@
+--- a/projet/Snake_Eater/Snake_Eater.java
++++ b/projet/Snake_Eater/Snake_Eater.java
+@@ -10,5 +10,8 @@
+ public class Snake_Eater {
+-    private int vitesse = 10;
++    private int vitesse = 20;
++    private boolean modeArcadeExtrem = true;
+ 
+     public Snake_Eater() {
++        // Ajout du mode Extreme pour le salon JPO
++        System.out.println("Mode Extreme activé !");
+     }
+ }
