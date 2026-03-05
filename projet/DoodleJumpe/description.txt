@@ -1,0 +1,25 @@
+Doodle Jumpe - version borne arcade (pygame)
+
+But du jeu:
+Montez le plus haut possible en sautant de plateforme en plateforme.
+Le saut est automatique: deplacez seulement le personnage en l'air.
+Tirez avec F pour eliminer les ennemis dans les airs.
+Si vous tombez trop bas ou touchez un ennemi, la partie est terminee.
+
+Plateformes speciales:
+- Orange: super saut
+- Bleue: plateforme mouvante
+- Marron: plateforme fragile (disparait apres usage)
+
+Interface complete:
+- Menu principal
+- Pause
+- Highscores persistants
+- Pseudo sur 4 lettres (score conserve si meilleur)
+
+Commandes:
+- Deplacement: Fleches gauche/droite ou Q/D
+- Validation menu: F / Entree / Espace
+- Pause: T ou P
+- Retour menu du jeu: Y
+- Quitter le jeu: menu "Quitter" ou Echap

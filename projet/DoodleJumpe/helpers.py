@@ -1,6 +1,10 @@
 import pygame
 
 
+def clamp(value, min_value, max_value):
+    return max(min_value, min(value, max_value))
+
+
 def make_vertical_gradient(width, height, c1, c2):
     surface = pygame.Surface((width, height))
     span = max(1, height - 1)
@@ -13,18 +17,6 @@ def make_vertical_gradient(width, height, c1, c2):
         )
         pygame.draw.line(surface, color, (0, y), (width, y))
     return surface
-
-
-def circle_intersects_rect(cx, cy, radius, rect):
-    nearest_x = max(rect.left, min(cx, rect.right))
-    nearest_y = max(rect.top, min(cy, rect.bottom))
-    dx = cx - nearest_x
-    dy = cy - nearest_y
-    return dx * dx + dy * dy <= radius * radius
-
-
-def clamp(value, min_value, max_value):
-    return max(min_value, min(value, max_value))
 
 
 def lighten(color, amount):

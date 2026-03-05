@@ -1,1 +1,0 @@
-gauche-droite:lancer(F):aucun:pause(T):aucun:retour(Y):quitter(menu/Echap)

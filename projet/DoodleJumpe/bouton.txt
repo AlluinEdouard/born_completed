@@ -1,0 +1,1 @@
+gauche-droite:saut auto+tire(F):aucun:pause(T):aucun:retour(Y):quitter(menu/Echap)
