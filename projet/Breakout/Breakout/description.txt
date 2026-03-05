@@ -18,6 +18,7 @@ Interface complete:
 
 Commandes:
 - Deplacement: Fleches gauche/droite ou Q/D
-- Lancer/Valider: G / R / Entree / Espace
+- Lancer/Valider: F / Entree / Espace
 - Pause: T ou P
-- Retour/Quitter: F / H / Echap
+- Retour au menu du jeu: Y
+- Quitter le jeu: menu \"Quitter\" ou Echap

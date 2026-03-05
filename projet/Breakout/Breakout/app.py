@@ -1,243 +1,21 @@
 import math
 import os
 import random
-import sqlite3
 import sys
 
 import pygame
 
-SCREEN_W = 960
-SCREEN_H = 700
-PLAY_TOP = 90
-PLAY_BOTTOM = SCREEN_H - 10
-
-PADDLE_BASE_W = 140
-PADDLE_WIDE_W = 220
-PADDLE_H = 18
-PADDLE_Y = SCREEN_H - 48
-PADDLE_SPEED = 9.2
-
-BALL_RADIUS = 10
-BALL_BASE_SPEED = 6.8
-BALL_MAX_SPEED = 13.5
-
-BRICK_ROWS_BASE = 5
-BRICK_COLS = 11
-BRICK_H = 30
-BRICK_GAP = 8
-
-BONUS_DROP_CHANCE = 0.2
-BONUS_SPEED = 3.6
-WIDE_DURATION_MS = 14000
-
-START_LIVES = 3
-MAX_SCORES = 10
-NAME_LEN = 4
-
-LEVEL_CLEAR_SCORE = 500
-BRICK_HIT_SCORE = 12
-BRICK_BREAK_SCORE = 60
-PADDLE_TOUCH_RESET_COMBO = True
-
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-HIGHSCORE_PATH = os.path.join(ROOT_DIR, "highscore")
-SCORE_DB_PATH = os.path.join(ROOT_DIR, "highscores.db")
-COVER_PATH = os.path.join(ROOT_DIR, "img", "image.png")
-
-BG_TOP = (14, 21, 48)
-BG_BOTTOM = (7, 10, 25)
-HUD_BG = (20, 27, 59)
-CARD = (22, 33, 70)
-CARD_BORDER = (97, 166, 255)
-TEXT_MAIN = (240, 246, 255)
-TEXT_DIM = (170, 186, 226)
-HIGHLIGHT = (98, 236, 255)
-ALERT = (255, 108, 133)
-BALL_COLOR = (255, 241, 199)
-PADDLE_MAIN = (108, 239, 255)
-PADDLE_EDGE = (221, 252, 255)
-BRICK_PALETTE = [
-    (255, 102, 120),
-    (255, 150, 84),
-    (255, 214, 92),
-    (109, 226, 145),
-    (103, 205, 255),
-    (173, 153, 255),
-]
-BONUS_COLORS = {
-    "WIDE": (109, 255, 202),
-    "LIFE": (255, 136, 161),
-    "SLOW": (151, 168, 255),
-}
-
-KEY_UP = {pygame.K_UP, pygame.K_z}
-KEY_DOWN = {pygame.K_DOWN, pygame.K_s}
-KEY_LEFT = {pygame.K_LEFT, pygame.K_q}
-KEY_RIGHT = {pygame.K_RIGHT, pygame.K_d}
-KEY_CONFIRM = {pygame.K_RETURN, pygame.K_SPACE, pygame.K_g, pygame.K_r}
-KEY_PAUSE = {pygame.K_p, pygame.K_t}
-KEY_BACK = {pygame.K_ESCAPE, pygame.K_f, pygame.K_h}
-KEY_BACK_MENU = {pygame.K_ESCAPE, pygame.K_f, pygame.K_h, pygame.K_q}
-
-
-def normalize_name(name):
-    clean = "".join(ch for ch in name.upper() if ch.isalnum())
-    if not clean:
-        clean = "A" * NAME_LEN
-    return (clean + ("A" * NAME_LEN))[:NAME_LEN]
-
-
-def _read_legacy_highscores(path):
-    scores = []
-    if not os.path.exists(path):
-        return scores
-    try:
-        with open(path, "r", encoding="utf-8") as file:
-            for line in file:
-                line = line.strip()
-                if not line or "-" not in line:
-                    continue
-                name, score_str = line.split("-", 1)
-                try:
-                    value = int(score_str)
-                except ValueError:
-                    continue
-                scores.append((normalize_name(name), max(0, value)))
-    except OSError:
-        return []
-    return scores
-
-
-def _init_score_db(path):
-    try:
-        with sqlite3.connect(SCORE_DB_PATH) as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS scores (
-                    name TEXT PRIMARY KEY,
-                    score INTEGER NOT NULL CHECK (score >= 0)
-                )
-                """
-            )
-            count = conn.execute("SELECT COUNT(*) FROM scores").fetchone()[0]
-            if count == 0:
-                for name, value in _read_legacy_highscores(path):
-                    conn.execute(
-                        """
-                        INSERT INTO scores(name, score) VALUES (?, ?)
-                        ON CONFLICT(name) DO UPDATE SET score = MAX(score, excluded.score)
-                        """,
-                        (normalize_name(name), max(0, int(value))),
-                    )
-            conn.commit()
-    except sqlite3.Error:
-        pass
-
-
-def _sync_highscore_file(path, scores):
-    try:
-        with open(path, "w", encoding="utf-8") as file:
-            limit_scores = scores[:MAX_SCORES]
-            for index, (entry_name, entry_score) in enumerate(limit_scores):
-                file.write(f"{entry_name}-{entry_score}")
-                if index != len(limit_scores) - 1:
-                    file.write("\n")
-    except OSError:
-        pass
-
-
-def load_highscores(path):
-    _init_score_db(path)
-    scores = []
-    try:
-        with sqlite3.connect(SCORE_DB_PATH) as conn:
-            rows = conn.execute(
-                "SELECT name, score FROM scores ORDER BY score DESC, name ASC LIMIT ?",
-                (MAX_SCORES,),
-            ).fetchall()
-            scores = [(normalize_name(name), max(0, int(score))) for name, score in rows]
-    except sqlite3.Error:
-        scores = _read_legacy_highscores(path)
-
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return scores[:MAX_SCORES]
-
-
-def save_highscore(path, name, score):
-    try:
-        _init_score_db(path)
-        clean_name = normalize_name(name)
-        clean_score = max(0, int(score))
-        with sqlite3.connect(SCORE_DB_PATH) as conn:
-            current = conn.execute("SELECT score FROM scores WHERE name = ?", (clean_name,)).fetchone()
-            if current is None:
-                conn.execute("INSERT INTO scores(name, score) VALUES(?, ?)", (clean_name, clean_score))
-            elif clean_score > int(current[0]):
-                conn.execute("UPDATE scores SET score = ? WHERE name = ?", (clean_score, clean_name))
-            conn.commit()
-    except (OSError, sqlite3.Error):
-        pass
-
-    _sync_highscore_file(path, load_highscores(path))
-
-
-def make_vertical_gradient(width, height, c1, c2):
-    surface = pygame.Surface((width, height))
-    span = max(1, height - 1)
-    for y in range(height):
-        ratio = y / span
-        color = (
-            int(c1[0] + (c2[0] - c1[0]) * ratio),
-            int(c1[1] + (c2[1] - c1[1]) * ratio),
-            int(c1[2] + (c2[2] - c1[2]) * ratio),
-        )
-        pygame.draw.line(surface, color, (0, y), (width, y))
-    return surface
-
-
-def circle_intersects_rect(cx, cy, radius, rect):
-    nearest_x = max(rect.left, min(cx, rect.right))
-    nearest_y = max(rect.top, min(cy, rect.bottom))
-    dx = cx - nearest_x
-    dy = cy - nearest_y
-    return dx * dx + dy * dy <= radius * radius
-
-
-def clamp(value, min_value, max_value):
-    return max(min_value, min(value, max_value))
-
-
-def lighten(color, amount):
-    return (
-        clamp(color[0] + amount, 0, 255),
-        clamp(color[1] + amount, 0, 255),
-        clamp(color[2] + amount, 0, 255),
-    )
-
-
-class Brick:
-    def __init__(self, rect, hp, color):
-        self.rect = rect
-        self.hp = hp
-        self.max_hp = hp
-        self.base_color = color
-
-    def draw(self, screen):
-        shade = (self.max_hp - self.hp) * 24
-        body = lighten(self.base_color, -shade)
-        border = lighten(self.base_color, 52)
-        pygame.draw.rect(screen, body, self.rect, border_radius=8)
-        pygame.draw.rect(screen, border, self.rect, 2, border_radius=8)
-
-        if self.hp > 1:
-            label = str(self.hp)
-            font = pygame.font.SysFont("Consolas", 18, bold=True)
-            text = font.render(label, True, (16, 24, 50))
-            screen.blit(text, (self.rect.centerx - text.get_width() // 2, self.rect.centery - text.get_height() // 2))
-
-    def hit(self):
-        self.hp -= 1
-        return self.hp <= 0
+from constants import ALERT, BALL_BASE_SPEED, BALL_COLOR, BALL_MAX_SPEED, BALL_RADIUS, BONUS_COLORS
+from constants import BONUS_DROP_CHANCE, BONUS_SPEED, BRICK_BREAK_SCORE, BRICK_COLS, BRICK_GAP
+from constants import BRICK_H, BRICK_HIT_SCORE, BRICK_PALETTE, BRICK_ROWS_BASE, CARD, CARD_BORDER
+from constants import COVER_PATH, HIGHLIGHT, HIGHSCORE_PATH, HUD_BG, KEY_BACK, KEY_BACK_MENU
+from constants import KEY_CONFIRM, KEY_DOWN, KEY_LEFT, KEY_PAUSE, KEY_RIGHT, KEY_UP, LEVEL_CLEAR_SCORE
+from constants import MAX_SCORES, NAME_LEN, PADDLE_BASE_W, PADDLE_EDGE, PADDLE_H, PADDLE_MAIN, PADDLE_SPEED
+from constants import PADDLE_TOUCH_RESET_COMBO, PADDLE_WIDE_W, PADDLE_Y, PLAY_BOTTOM, PLAY_TOP
+from constants import SCREEN_H, SCREEN_W, START_LIVES, TEXT_DIM, TEXT_MAIN, WIDE_DURATION_MS
+from entities import Brick
+from helpers import clamp, circle_intersects_rect, lighten, make_vertical_gradient
+from storage import ensure_score_files, load_highscores, save_highscore
 
 
 class BreakoutApp:
@@ -263,8 +41,8 @@ class BreakoutApp:
         self.move_right = False
 
         self.cover = self.load_cover()
-        self.bg_game = make_vertical_gradient(SCREEN_W, SCREEN_H, BG_TOP, BG_BOTTOM)
-        self.bg_menu = make_vertical_gradient(SCREEN_W, SCREEN_H, lighten(BG_TOP, 8), lighten(BG_BOTTOM, -6))
+        self.bg_game = make_vertical_gradient(SCREEN_W, SCREEN_H, (14, 21, 48), (7, 10, 25))
+        self.bg_menu = make_vertical_gradient(SCREEN_W, SCREEN_H, (22, 29, 56), (5, 8, 19))
 
         star_rng = random.Random(2026)
         self.bg_stars = [
@@ -273,7 +51,8 @@ class BreakoutApp:
         ]
 
         self.pause_started_ms = 0
-        _sync_highscore_file(HIGHSCORE_PATH, load_highscores(HIGHSCORE_PATH))
+        self.menu_input_lock_until_ms = 0
+        ensure_score_files(HIGHSCORE_PATH)
         self.reset_full_game()
 
     def load_cover(self):
@@ -330,6 +109,10 @@ class BreakoutApp:
         self.status_color = color
         self.status_until_ms = pygame.time.get_ticks() + duration_ms
 
+    def go_to_menu(self, lock_ms=240):
+        self.state = "menu"
+        self.menu_input_lock_until_ms = pygame.time.get_ticks() + lock_ms
+
     def make_bricks(self):
         self.bricks = []
         rows = min(9, BRICK_ROWS_BASE + (self.level - 1) // 2)
@@ -356,8 +139,8 @@ class BreakoutApp:
     def launch_ball(self):
         if not self.ball_stuck:
             return
-        speed = BALL_BASE_SPEED + min(3.4, (self.level - 1) * 0.35)
-        horizontal = random.uniform(0.42, 0.9)
+        speed = BALL_BASE_SPEED + min(1.8, (self.level - 1) * 0.2)
+        horizontal = random.uniform(0.35, 0.8)
         direction = -1 if random.random() < 0.5 else 1
         self.ball_vx = speed * horizontal * direction
         self.ball_vy = -math.sqrt(max(1.0, speed * speed - self.ball_vx * self.ball_vx))
@@ -390,8 +173,8 @@ class BreakoutApp:
             self.score += 140
             self.set_status("Bonus: +1 vie", BONUS_COLORS["LIFE"])
         else:
-            self.ball_vx *= 0.78
-            self.ball_vy *= 0.78
+            self.ball_vx *= 0.68
+            self.ball_vy *= 0.68
             self.score += 95
             self.set_status("Bonus: balle ralentie", BONUS_COLORS["SLOW"])
 
@@ -430,7 +213,7 @@ class BreakoutApp:
         speed = math.hypot(self.ball_vx, self.ball_vy)
         if speed <= 0.01:
             return
-        new_speed = min(BALL_MAX_SPEED + self.level * 0.3, speed * factor)
+        new_speed = min(BALL_MAX_SPEED + self.level * 0.2, speed * factor)
         ratio = new_speed / speed
         self.ball_vx *= ratio
         self.ball_vy *= ratio
@@ -459,12 +242,12 @@ class BreakoutApp:
         relative = (self.ball_x - self.paddle.centerx) / max(1, self.paddle.width / 2)
         relative = clamp(relative, -1.0, 1.0)
 
-        speed = max(BALL_BASE_SPEED + (self.level - 1) * 0.35, math.hypot(self.ball_vx, self.ball_vy))
-        self.ball_vx = relative * speed * 1.08
-        self.ball_vy = -abs(speed * (1.0 + abs(relative) * 0.12))
+        speed = max(BALL_BASE_SPEED + (self.level - 1) * 0.2, math.hypot(self.ball_vx, self.ball_vy))
+        self.ball_vx = relative * speed * 1.06
+        self.ball_vy = -abs(speed * (0.95 + abs(relative) * 0.1))
 
-        if abs(self.ball_vx) < 1.5:
-            self.ball_vx = 1.5 if self.ball_vx >= 0 else -1.5
+        if abs(self.ball_vx) < 1.2:
+            self.ball_vx = 1.2 if self.ball_vx >= 0 else -1.2
 
         if PADDLE_TOUCH_RESET_COMBO:
             self.combo = 0
@@ -501,7 +284,7 @@ class BreakoutApp:
             else:
                 self.combo = max(0, self.combo - 1)
 
-            self.ball_speed_up(1.015)
+            self.ball_speed_up(1.006)
             return
 
     def lose_life(self):
@@ -538,7 +321,7 @@ class BreakoutApp:
         self.bonuses = alive_bonuses
 
     def update_gameplay(self, now, dt):
-        dt_factor = max(0.6, min(2.3, dt * 60.0))
+        dt_factor = max(0.6, min(1.7, dt * 60.0))
 
         self.update_paddle(dt_factor)
 
@@ -627,11 +410,11 @@ class BreakoutApp:
             wide = self.font_small.render("Barre large active", True, BONUS_COLORS["WIDE"])
             self.screen.blit(wide, (520, 56))
 
-        tip = self.font_small.render("Fleches/QD: deplacer | Entree/A: lancer | P: pause | F/Echap: menu", True, TEXT_DIM)
+        tip = self.font_small.render("Fleches/QD: deplacer | F: lancer | T: pause | Y: menu", True, TEXT_DIM)
         self.screen.blit(tip, (20, SCREEN_H - 30))
 
         if self.ball_stuck and self.state == "game":
-            message = self.font_small.render("Appuyez sur A/Entree pour lancer la balle", True, HIGHLIGHT)
+            message = self.font_small.render("Appuyez sur F pour lancer la balle", True, HIGHLIGHT)
             self.screen.blit(message, (SCREEN_W // 2 - message.get_width() // 2, PLAY_BOTTOM - 40))
 
         if self.status_text and pygame.time.get_ticks() < self.status_until_ms:
@@ -679,7 +462,7 @@ class BreakoutApp:
         self.screen.blit(rules_1, (SCREEN_W // 2 - rules_1.get_width() // 2, SCREEN_H - 100))
         self.screen.blit(rules_2, (SCREEN_W // 2 - rules_2.get_width() // 2, SCREEN_H - 74))
 
-        tip = self.font_small.render("Haut/Bas: menu   A/Entree: valider   F/Echap: quitter", True, TEXT_DIM)
+        tip = self.font_small.render("Haut/Bas: menu   F/Entree: valider   Y/Echap: quitter", True, TEXT_DIM)
         self.screen.blit(tip, (SCREEN_W // 2 - tip.get_width() // 2, SCREEN_H - 46))
 
     def draw_highscores(self):
@@ -701,7 +484,7 @@ class BreakoutApp:
                 text = self.font.render(line, True, TEXT_MAIN)
                 self.screen.blit(text, (SCREEN_W // 2 - 175, 132 + i * 42))
 
-        tip = self.font_small.render("A/Entree/F/Echap pour retour menu", True, TEXT_DIM)
+        tip = self.font_small.render("F/Entree pour valider   Y/Echap pour retour", True, TEXT_DIM)
         self.screen.blit(tip, (SCREEN_W // 2 - tip.get_width() // 2, SCREEN_H - 56))
 
     def draw_pause(self):
@@ -751,8 +534,8 @@ class BreakoutApp:
             txt = self.font_big.render(letter, True, (14, 20, 44))
             self.screen.blit(txt, (box.centerx - txt.get_width() // 2, box.y + 14))
 
-        tip = self.font_small.render("Haut/Bas: lettre | Gauche/Droite: position | A/Entree: valider", True, TEXT_MAIN)
-        tip2 = self.font_small.render("F/Echap: ignorer et retour menu", True, TEXT_DIM)
+        tip = self.font_small.render("Haut/Bas: lettre | Gauche/Droite: position | F/Entree: valider", True, TEXT_MAIN)
+        tip2 = self.font_small.render("Y/Echap: ignorer et retour menu", True, TEXT_DIM)
         self.screen.blit(tip, (SCREEN_W // 2 - tip.get_width() // 2, 374))
         self.screen.blit(tip2, (SCREEN_W // 2 - tip2.get_width() // 2, 404))
 
@@ -784,7 +567,7 @@ class BreakoutApp:
             self.pause_started_ms = pygame.time.get_ticks()
             self.state = "pause"
         elif key in KEY_BACK:
-            self.state = "menu"
+            self.go_to_menu()
 
     def handle_event_game_up(self, key):
         if key in KEY_LEFT:
@@ -808,7 +591,7 @@ class BreakoutApp:
             if self.pause_index == 0:
                 self.resume_after_pause()
             else:
-                self.state = "menu"
+                self.go_to_menu()
         elif key in KEY_BACK:
             self.resume_after_pause()
 
@@ -828,7 +611,7 @@ class BreakoutApp:
             save_highscore(HIGHSCORE_PATH, name, self.score)
             self.state = "highscores"
         elif key in KEY_BACK:
-            self.state = "menu"
+            self.go_to_menu()
 
     def run(self):
         while self.running:
@@ -840,6 +623,8 @@ class BreakoutApp:
                     self.running = False
                 elif event.type == pygame.KEYDOWN:
                     key = event.key
+                    if self.state == "menu" and now < self.menu_input_lock_until_ms:
+                        continue
                     if self.state == "menu":
                         self.handle_event_menu(key)
                     elif self.state == "game":
@@ -848,7 +633,7 @@ class BreakoutApp:
                         self.handle_event_pause(key)
                     elif self.state == "highscores":
                         if key in KEY_CONFIRM or key in KEY_BACK_MENU:
-                            self.state = "menu"
+                            self.go_to_menu()
                     elif self.state == "name_input":
                         self.handle_event_name_input(key)
                 elif event.type == pygame.KEYUP:
@@ -873,5 +658,5 @@ class BreakoutApp:
         sys.exit(0)
 
 
-if __name__ == "__main__":
+def run_game():
     BreakoutApp().run()

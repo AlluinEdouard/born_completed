@@ -1,1 +1,0 @@
-gauche-droite:valider/lancer:aucun:pause:aucun:retour:quitter
