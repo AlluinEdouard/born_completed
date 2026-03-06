@@ -65,14 +65,25 @@ public class Bouton {
 	try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(yourPath)) {
 	    int i = Graphique.tableau.length - 1;
 	    for (Path path : directoryStream) {
-		Graphique.tableau[i].setTexte(new Texte(Couleur .NOIR, path.getFileName().toString(), new Font("Calibri", Font.TYPE1_FONT, 30), new Point(310, 510)));
+		if(i < 0){
+		    break;
+		}
+		if(!Files.isDirectory(path)){
+		    continue;
+		}
+		String nomJeu = path.getFileName().toString();
+		Path script = FileSystems.getDefault().getPath(nomJeu + ".sh");
+		if(!Files.isRegularFile(script)){
+		    continue;
+		}
+		Graphique.tableau[i].setTexte(new Texte(Couleur .NOIR, nomJeu, new Font("Calibri", Font.TYPE1_FONT, 30), new Point(310, 510)));
 		Graphique.tableau[i].setTexture(new Texture("img/bouton2.png", new Point(100, 478), 400, 65));
 		for(int j=0;j<Graphique.tableau.length-(i+1);j++){
 		    Graphique.tableau[i].getTexte().translater(0,-110);
 		    Graphique.tableau[i].getTexture().translater(0,-110);
 		}
-		Graphique.tableau[i].setChemin("projet/"+path.getFileName().toString());
-		Graphique.tableau[i].setNom(path.getFileName().toString());
+		Graphique.tableau[i].setChemin("projet/"+nomJeu);
+		Graphique.tableau[i].setNom(nomJeu);
 		Graphique.tableau[i].setNumeroDeJeu(i);
 		i--;
 	    }
