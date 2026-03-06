@@ -1,8 +1,14 @@
 import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.*;
 import javax.swing.*;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 import MG2D.geometrie.*;
 import MG2D.geometrie.Point;
@@ -20,6 +26,7 @@ public class Graphique {
     private static final int TAILLEX = 1280;
     private static final int TAILLEY = 1024;
     private static final Fenetre f = new Fenetre("_Menu Borne D'arcade_", TAILLEX, TAILLEY);
+    private static final GraphicsDevice ECRAN = recupererEcranPrincipal();
     private ClavierBorneArcade clavier;
     private BoiteSelection bs;
     private BoiteImage bi;
@@ -52,14 +59,40 @@ public class Graphique {
 
 	clavier = new ClavierBorneArcade();
 	f.addKeyListener(clavier);
-	f.getP().addKeyListener(clavier);
+	f.setFocusable(true);
+	f.addWindowFocusListener(new WindowAdapter() {
+	    @Override
+	    public void windowGainedFocus(WindowEvent e) {
+		clavier.reset();
+		reprendreFocusMenu();
+	    }
+
+	    @Override
+	    public void windowLostFocus(WindowEvent e) {
+		// Evite les touches "bloquées" lors d'un changement de fenêtre.
+		clavier.reset();
+	    }
+	});
+	SwingUtilities.invokeLater(new Runnable() {
+	    @Override
+	    public void run() {
+		reprendreFocusMenu();
+	    }
+	});
 
 	/*Retrouver le nombre de jeux dispo*/
 	Path yourPath = FileSystems.getDefault().getPath("projet/");
 	int cpt=0;
 	try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(yourPath)) {
 	    for (Path path : directoryStream) {
-		cpt++;
+		if(!Files.isDirectory(path)){
+		    continue;
+		}
+		String nomJeu = path.getFileName().toString();
+		Path script = FileSystems.getDefault().getPath(nomJeu + ".sh");
+		if(Files.isRegularFile(script)){
+		    cpt++;
+		}
 	    }
 	} catch (IOException e) {
 	    e.printStackTrace();
@@ -312,5 +345,115 @@ public class Graphique {
 	 */
 	public static void afficherTexte(int valeur){
 		f.ajouter(tableau[valeur].getTexte());
+	}
+
+	private static void executerSurEDT(boolean attendre, Runnable action) {
+	    if (SwingUtilities.isEventDispatchThread()) {
+		action.run();
+		return;
+	    }
+	    if (attendre) {
+		try {
+		    SwingUtilities.invokeAndWait(action);
+		} catch (InterruptedException e) {
+		    Thread.currentThread().interrupt();
+		} catch (InvocationTargetException e) {
+		    e.printStackTrace();
+		}
+	    } else {
+		SwingUtilities.invokeLater(action);
+	    }
+	}
+
+	private static GraphicsDevice recupererEcranPrincipal() {
+	    try {
+		GraphicsDevice[] ecrans = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+		if (ecrans.length > 0) {
+		    return ecrans[0];
+		}
+	    } catch (Exception e) {
+		// On reste compatible même si l'environnement graphique est indisponible.
+	    }
+	    return null;
+	}
+
+	private static void libererPleinEcranMenu() {
+	    if (ECRAN == null) {
+		return;
+	    }
+	    try {
+		if (ECRAN.getFullScreenWindow() == f) {
+		    ECRAN.setFullScreenWindow(null);
+		}
+	    } catch (Exception e) {
+		// Ignore: certains WM n'autorisent pas cette opération.
+	    }
+	}
+
+	private static void activerPleinEcranMenu() {
+	    if (ECRAN == null) {
+		return;
+	    }
+	    try {
+		ECRAN.setFullScreenWindow(f);
+	    } catch (Exception e) {
+		// Ignore: fallback en fenêtre classique.
+	    }
+	}
+
+	public static void masquerMenuPourJeu() {
+	    executerSurEDT(true, new Runnable() {
+		@Override
+		public void run() {
+		    libererPleinEcranMenu();
+		    f.setVisible(false);
+		}
+	    });
+	}
+
+	public static void reprendreFocusMenu() {
+	    executerSurEDT(false, new Runnable() {
+		@Override
+		public void run() {
+		    if (!f.isVisible()) {
+			f.setVisible(true);
+		    }
+		    activerPleinEcranMenu();
+		    f.setState(Frame.NORMAL);
+		    f.toFront();
+		    f.requestFocus();
+		    f.requestFocusInWindow();
+		}
+	    });
+	}
+
+	public static void restaurerMenuApresJeu(final ClavierBorneArcade clavier) {
+	    if (clavier != null) {
+		clavier.reset();
+	    }
+	    executerSurEDT(true, new Runnable() {
+		@Override
+		public void run() {
+		    f.setVisible(true);
+		    activerPleinEcranMenu();
+		    f.setState(Frame.NORMAL);
+		    f.toFront();
+		    f.requestFocus();
+		    f.requestFocusInWindow();
+		}
+	    });
+
+	    // Re-tente légèrement après le retour du jeu pour les WM capricieux.
+	    Timer rattrapageFocus = new Timer(120, e -> {
+		f.toFront();
+		f.requestFocus();
+		f.requestFocusInWindow();
+		if (clavier != null) {
+		    clavier.reset();
+		}
+		((Timer) e.getSource()).stop();
+	    });
+	    rattrapageFocus.setRepeats(false);
+	    rattrapageFocus.start();
 	}
 }

@@ -2,7 +2,9 @@
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MG2D_DIR="$ROOT_DIR/MG2D"
 
-xdotool mousemove 1280 1024
+if command -v xdotool >/dev/null 2>&1; then
+  xdotool mousemove 1280 1024 >/dev/null 2>&1 || true
+fi
 cd "$ROOT_DIR/projet/Snake_Eater"
 touch highscore
-java -cp ".:../..:$MG2D_DIR" Snake_Eater
+java -Dmg2d.fullscreen=true -Dmg2d.fullscreen.mode=desktop -cp ".:../..:$MG2D_DIR" Snake_Eater

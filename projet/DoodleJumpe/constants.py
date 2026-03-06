@@ -13,7 +13,9 @@ PLAYER_START_Y = SCREEN_H - 170
 GRAVITY = 0.36
 JUMP_SPEED = -12.8
 SUPER_JUMP_SPEED = -18.6
-CAMERA_TARGET_Y = int(SCREEN_H * 0.35)
+# Camera anchor for upward scrolling.
+# A higher value keeps the player lower on screen, which shows more space above.
+CAMERA_TARGET_Y = int(SCREEN_H * 0.52)
 FAIL_Y_MARGIN = 120
 
 BULLET_RADIUS = 5
@@ -71,12 +73,12 @@ ENEMY_SLIME = (124, 67, 224)
 ENEMY_BAT = (221, 74, 121)
 ENEMY_OUTLINE = (34, 22, 46)
 
-KEY_UP = {pygame.K_UP, pygame.K_z}
-KEY_DOWN = {pygame.K_DOWN, pygame.K_s}
-KEY_LEFT = {pygame.K_LEFT, pygame.K_q}
-KEY_RIGHT = {pygame.K_RIGHT, pygame.K_d}
-KEY_CONFIRM = {pygame.K_f, pygame.K_RETURN, pygame.K_SPACE}
-KEY_SHOOT = {pygame.K_f}
+KEY_UP = {pygame.K_UP, pygame.K_z, pygame.K_o}
+KEY_DOWN = {pygame.K_DOWN, pygame.K_s, pygame.K_l}
+KEY_LEFT = {pygame.K_LEFT, pygame.K_q, pygame.K_k}
+KEY_RIGHT = {pygame.K_RIGHT, pygame.K_d, pygame.K_m}
+KEY_CONFIRM = {pygame.K_f, pygame.K_AMPERSAND, pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE}
+KEY_SHOOT = {pygame.K_f, pygame.K_AMPERSAND}
 KEY_PAUSE = {pygame.K_p, pygame.K_t}
-KEY_BACK = {pygame.K_y, pygame.K_ESCAPE}
-KEY_BACK_MENU = {pygame.K_ESCAPE}
+KEY_BACK = {pygame.K_y, pygame.K_QUOTE, pygame.K_ESCAPE}
+KEY_BACK_MENU = {pygame.K_ESCAPE, pygame.K_y, pygame.K_QUOTE}

@@ -40,6 +40,7 @@ public class Pointeur {
 	    //System.out.println(Graphique.tableau[getValue()].getChemin());
 	    try {
 		Graphique.stopMusiqueFond();
+		Graphique.masquerMenuPourJeu();
 		String script = "./"+Graphique.tableau[getValue()].getNom()+".sh";
 		Process process = new ProcessBuilder("bash", script)
 			.inheritIO()
@@ -52,6 +53,8 @@ public class Pointeur {
 		e.printStackTrace();
 	    } catch(Exception e){	//on catche toutes les exceptions, nécessaire pour le waitFor()
 			e.printStackTrace();
+		} finally {
+			Graphique.restaurerMenuApresJeu(clavier);
 		}
 
 	    //System.out.println("le process sur "+Graphique.tableau[getValue()].getChemin()+" est bien lancé");
