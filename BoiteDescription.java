@@ -1,10 +1,13 @@
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.awt.image.BufferedImage;
 import MG2D.geometrie.Texture;	
 import MG2D.Couleur;
 import MG2D.geometrie.Point;
@@ -19,6 +22,10 @@ import java.io.IOException;
  * ainsi que l'affichage du top 10 des meilleurs scores.
  */
 public class BoiteDescription extends Boite{
+
+    private static final int LARGEUR_MAX_DESCRIPTION = 560;
+    private static final int LARGEUR_MAX_CONTROLE = 110;
+    private static final int LARGEUR_MAX_HIGHSCORE = 230;
 
     private Texte[] message;
     private boolean stop;
@@ -152,19 +159,15 @@ public class BoiteDescription extends Boite{
 	    BufferedReader br=new BufferedReader(ipsr);
 	    String ligne;
 	    while (/*(ligne=br.readLine())!=null &&*/stop == false){
-		ligne=br.readLine();
-		//System.out.println(ligne);
-		if(ligne != null){
-		    //changer message
-					
-		    message[nombreLigne].setTexte(ligne);
-		    setMessage(ligne, nombreLigne);
-		}else{
-		    //changer message
-					
-		    message[nombreLigne].setTexte("");
-		    setMessage("", nombreLigne);
-		}
+		    ligne=br.readLine();
+			//System.out.println(ligne);
+			if(ligne != null){
+			    //changer message
+			    setMessage(ligne, nombreLigne);
+			}else{
+			    //changer message
+			    setMessage("", nombreLigne);
+			}
 		nombreLigne++;
 		if(nombreLigne >= 10){
 		    stop = true;
@@ -186,28 +189,31 @@ public class BoiteDescription extends Boite{
      */
     public void lireHighScore(String path){
 	
-        for(int i=0;i<10;i++){
-	    if(i==0)
-		listeHighScore[i].setTexte("1er - ");
-	    else
-		listeHighScore[i].setTexte((i+1)+"eme - ");
-	}
+	        for(int i=0;i<10;i++){
+		    if(i==0){
+			setLigneHighScore(i, "1er - ");
+		    }else{
+			setLigneHighScore(i, (i+1)+"eme - ");
+		    }
+		}
 	
 	String fichier =path+"/highscore";
 	
-	File f = new File(fichier);
-	if(!f.exists()){
-	    for(int i=0;i<10;i++)
-		listeHighScore[i].setTexte("/");
-	}else{
-	    ArrayList<LigneHighScore> liste = HighScore.lireFichier(fichier);
-	    for(int i=0;i<liste.size();i++){
-		if(i==0)
-		    listeHighScore[i].setTexte("1er : "+liste.get(i).getNom()+" - "+liste.get(i).getScore());
-		else
-		    listeHighScore[i].setTexte((i+1)+"eme : "+liste.get(i).getNom()+" -  "+liste.get(i).getScore());
-	    }
-	}
+		File f = new File(fichier);
+		if(!f.exists()){
+		    for(int i=0;i<10;i++){
+			setLigneHighScore(i, "/");
+		    }
+		}else{
+		    ArrayList<LigneHighScore> liste = HighScore.lireFichier(fichier);
+		    for(int i=0;i<liste.size() && i<listeHighScore.length;i++){
+			if(i==0){
+			    setLigneHighScore(i, "1er : "+liste.get(i).getNom()+" - "+liste.get(i).getScore());
+			}else{
+			    setLigneHighScore(i, (i+1)+"eme : "+liste.get(i).getNom()+" -  "+liste.get(i).getScore());
+			}
+		    }
+		}
     }
 
 	/**
@@ -263,7 +269,7 @@ public class BoiteDescription extends Boite{
     }
 	
     public void setMessage(String message, int a) {
-	this.message[a].setTexte(message);	
+	this.message[a].setTexte(tronquerTexte(message, this.message[a].getPolice(), LARGEUR_MAX_DESCRIPTION));	
     }
 	
     public Texture[] getBouton(){
@@ -292,11 +298,11 @@ public class BoiteDescription extends Boite{
 
 	
     public void settJoystick(String s){
-	this.tJoystick.setTexte(s);		
+	this.tJoystick.setTexte(tronquerTexte(s, this.tJoystick.getPolice(), LARGEUR_MAX_CONTROLE));		
     }
-	
+		
     public void settBouton(String s, int a){
-	this.tBouton[a].setTexte(s);		
+	this.tBouton[a].setTexte(tronquerTexte(s, this.tBouton[a].getPolice(), LARGEUR_MAX_CONTROLE));		
     }
 	
     /*public Texte getMessage() {
@@ -304,5 +310,40 @@ public class BoiteDescription extends Boite{
       }
     */
 	
+
+    private void setLigneHighScore(int index, String texte){
+	this.listeHighScore[index].setTexte(tronquerTexte(texte, this.listeHighScore[index].getPolice(), LARGEUR_MAX_HIGHSCORE));
+    }
+
+    private static String tronquerTexte(String texte, Font police, int largeurMax){
+	if(texte == null){
+	    return "";
+	}
+
+	BufferedImage imageMesure = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+	Graphics2D graphics = imageMesure.createGraphics();
+	try{
+	    FontMetrics metrics = graphics.getFontMetrics(police);
+	    if(metrics.stringWidth(texte) <= largeurMax){
+		return texte;
+	    }
+	    String suffixe = "...";
+	    int largeurSuffixe = metrics.stringWidth(suffixe);
+	    if(largeurSuffixe >= largeurMax){
+		return suffixe;
+	    }
+	    StringBuilder resultat = new StringBuilder();
+	    for(int i = 0 ; i < texte.length() ; i++){
+		char c = texte.charAt(i);
+		if(metrics.stringWidth(resultat.toString() + c) + largeurSuffixe > largeurMax){
+		    break;
+		}
+		resultat.append(c);
+	    }
+	    return resultat.toString() + suffixe;
+	} finally {
+	    graphics.dispose();
+	}
+    }
 
 }

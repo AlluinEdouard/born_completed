@@ -27,6 +27,11 @@ public class Graphique {
     private static final int TAILLEY = 1024;
     private static final Fenetre f = new Fenetre("_Menu Borne D'arcade_", TAILLEX, TAILLEY);
     private static final GraphicsDevice ECRAN = recupererEcranPrincipal();
+    private static final int AJUSTEMENT_Y = 45;
+    private static final int DECALAGE_X = calculerDecalageX();
+    private static final int DECALAGE_Y = calculerDecalageY();
+    private static final int DECALAGE_FINAL_X = DECALAGE_X;
+    private static final int DECALAGE_FINAL_Y = DECALAGE_Y + AJUSTEMENT_Y;
     private ClavierBorneArcade clavier;
     private BoiteSelection bs;
     private BoiteImage bi;
@@ -49,13 +54,13 @@ public class Graphique {
     	
 	int add_variables = 0;
 	font = null;
-	try{
-	    File in = new File("fonts/PrStart.ttf");
-	    font = Font.createFont(Font.TRUETYPE_FONT, in).deriveFont(32.0f);
-	}catch (Exception e) {
-	    System.err.println(e.getMessage());
-	    font = new Font("SansSerif", Font.PLAIN, 32);
-	}
+		try{
+		    File in = new File("fonts/PrStart.ttf");
+		    font = Font.createFont(Font.TRUETYPE_FONT, in).deriveFont(26.0f);
+		}catch (Exception e) {
+		    System.err.println(e.getMessage());
+		    font = new Font("SansSerif", Font.PLAIN, 26);
+		}
 
 	clavier = new ClavierBorneArcade();
 	f.addKeyListener(clavier);
@@ -104,19 +109,20 @@ public class Graphique {
 		textesAffiches[i]=true;
 	}
 	
-	Bouton.remplirBouton();
-	pointeur = new Pointeur();
-	bs = new BoiteSelection(new Rectangle(Couleur .GRIS_CLAIR, new Point(0, 0), new Point(640, TAILLEY), true), pointeur);
-	//f.ajouter(bs.getRectangle());
-	//System.out.println(tableau[pointeur.getValue()].getChemin());
-	bi = new BoiteImage(new Rectangle(Couleur .GRIS_FONCE, new Point(640, 512), new Point(TAILLEX, TAILLEY), true), new String(tableau[pointeur.getValue()].getChemin()));
-	//f.ajouter(bi.getRectangle());
-	bd = new BoiteDescription(new Rectangle(Couleur .GRIS, new Point(640, 0), new Point(TAILLEX, 512), true));
-	bd.lireFichier(tableau[pointeur.getValue()].getChemin());
-	bd.lireHighScore(tableau[pointeur.getValue()].getChemin());
-	//f.ajouter(bd.getRectangle());
+		Bouton.remplirBouton();
+		pointeur = new Pointeur();
+		bs = new BoiteSelection(new Rectangle(Couleur .GRIS_CLAIR, pointEcran(0, 0), pointEcran(640, TAILLEY), true), pointeur);
+		//f.ajouter(bs.getRectangle());
+		//System.out.println(tableau[pointeur.getValue()].getChemin());
+		bi = new BoiteImage(new Rectangle(Couleur .GRIS_FONCE, pointEcran(640, 512), pointEcran(TAILLEX, TAILLEY), true), new String(tableau[pointeur.getValue()].getChemin()));
+		//f.ajouter(bi.getRectangle());
+		bd = new BoiteDescription(new Rectangle(Couleur .GRIS, pointEcran(640, 0), pointEcran(TAILLEX, 512), true));
+		bd.lireFichier(tableau[pointeur.getValue()].getChemin());
+		bd.lireHighScore(tableau[pointeur.getValue()].getChemin());
+		appliquerDecalageInterface();
+		//f.ajouter(bd.getRectangle());
 
-	Texture fond = new Texture("img/fondretro3.png", new Point(0, 0), TAILLEX, TAILLEY);
+		Texture fond = new Texture("img/fondretro3.png", pointEcran(0, 0), TAILLEX, TAILLEY);
 	f.ajouter(fond);
 	//ajout apres fond car bug graphique sinon
 	f.ajouter(bi.getImage());
@@ -145,9 +151,9 @@ public class Graphique {
 	    f.ajouter(bd.gettBouton()[i]);
 	}
 	f.ajouter(bd.gettJoystick());
-	f.ajouter(new Ligne(Couleur.NOIR,new Point(670,360), new Point(1250,360)));
-	f.ajouter(new Ligne(Couleur.NOIR,new Point(670,190), new Point(1250,190)));
-	f.ajouter(new Ligne(Couleur.NOIR,new Point(960,210), new Point(960,310)));
+		f.ajouter(new Ligne(Couleur.NOIR,pointEcran(670,360), pointEcran(1250,360)));
+		f.ajouter(new Ligne(Couleur.NOIR,pointEcran(670,190), pointEcran(1250,190)));
+		f.ajouter(new Ligne(Couleur.NOIR,pointEcran(960,210), pointEcran(960,310)));
 	f.ajouter(bd.getHighscore());
 	for(int i = 0 ; i < bd.getListeHighScore().length ; i++){
 	    f.ajouter(bd.getListeHighScore()[i]);
@@ -194,13 +200,13 @@ public class Graphique {
 	 */
 
     public void selectionJeu(){	
-		Texture fondBlancTransparent = new Texture("./img/blancTransparent.png", new Point(0,0));
-		Rectangle boutonNon = new Rectangle(Couleur.ROUGE, new Point(340, 600), 200, 100, true);
-		Rectangle boutonOui = new Rectangle(Couleur.VERT, new Point(740, 600), 200, 100, true);
-		Texte message = new Texte(Couleur.NOIR, "Voulez vous vraiment quitter ?", font, new Point(640, 800));
-		Texte non = new Texte(Couleur.NOIR, "NON", font, new Point(440, 650));
-		Texte oui = new Texte(Couleur.NOIR, "OUI", font, new Point(840, 650));
-		Rectangle rectSelection = new Rectangle(Couleur.BLEU, new Point(330,590),220,120, true);
+			Texture fondBlancTransparent = new Texture("./img/blancTransparent.png", pointEcran(0,0));
+			Rectangle boutonNon = new Rectangle(Couleur.ROUGE, pointEcran(340, 600), 200, 100, true);
+			Rectangle boutonOui = new Rectangle(Couleur.VERT, pointEcran(740, 600), 200, 100, true);
+			Texte message = new Texte(Couleur.NOIR, "Voulez vous vraiment quitter ?", font, pointEcran(640, 800));
+			Texte non = new Texte(Couleur.NOIR, "NON", font, pointEcran(440, 650));
+			Texte oui = new Texte(Couleur.NOIR, "OUI", font, pointEcran(840, 650));
+			Rectangle rectSelection = new Rectangle(Couleur.BLEU, pointEcran(330,590),220,120, true);
 		int frame=0;
 		boolean fermetureMenu=false;
 		int selectionSur = 0;
@@ -286,15 +292,15 @@ public class Graphique {
 					}
 					   
 					
-					if(selectionSur==0){
-						rectSelection.setA(new Point(330,590));
-						rectSelection.setB(new Point(550,710));
-					}
-					else{
-						rectSelection.setB(new Point(950,710));
-						rectSelection.setA(new Point(730,590));
-						
-					}
+						if(selectionSur==0){
+							rectSelection.setA(pointEcran(330,590));
+							rectSelection.setB(pointEcran(550,710));
+						}
+						else{
+							rectSelection.setB(pointEcran(950,710));
+							rectSelection.setA(pointEcran(730,590));
+							
+						}
 					if(clavier.getBoutonJ1ATape()){
 						if(selectionSur==0){
 							f.supprimer(fondBlancTransparent);
@@ -344,7 +350,46 @@ public class Graphique {
 	 * @param valeur L'index du jeu dans le tableau des boutons.
 	 */
 	public static void afficherTexte(int valeur){
-		f.ajouter(tableau[valeur].getTexte());
+			f.ajouter(tableau[valeur].getTexte());
+		}
+
+	private void appliquerDecalageInterface() {
+	    if (DECALAGE_FINAL_X == 0 && DECALAGE_FINAL_Y == 0) {
+		return;
+	    }
+
+	    pointeur.getTriangleGauche().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    pointeur.getTriangleDroite().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    pointeur.getRectangleCentre().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+
+	    for (int i = 0; i < tableau.length; i++) {
+		if (tableau[i].getTexture() != null) {
+		    tableau[i].getTexture().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+		}
+		if (tableau[i].getTexte() != null) {
+		    tableau[i].getTexte().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+		}
+	    }
+
+	    for (int i = 0; i < bd.getMessage().length; i++) {
+		bd.getMessage()[i].translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    }
+	    for (int i = 0; i < bd.getBouton().length; i++) {
+		bd.getBouton()[i].translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    }
+	    for (int i = 0; i < bd.gettBouton().length; i++) {
+		bd.gettBouton()[i].translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    }
+	    for (int i = 0; i < bd.getListeHighScore().length; i++) {
+		bd.getListeHighScore()[i].translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    }
+	    bd.getJoystick().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    bd.gettJoystick().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	    bd.getHighscore().translater(DECALAGE_FINAL_X, DECALAGE_FINAL_Y);
+	}
+
+	private static Point pointEcran(int x, int y) {
+	    return new Point(x + DECALAGE_FINAL_X, y + DECALAGE_FINAL_Y);
 	}
 
 	private static void executerSurEDT(boolean attendre, Runnable action) {
@@ -375,6 +420,20 @@ public class Graphique {
 		// On reste compatible même si l'environnement graphique est indisponible.
 	    }
 	    return null;
+	}
+
+	private static int calculerDecalageX() {
+	    if (ECRAN == null || !ECRAN.isFullScreenSupported() || ECRAN.getDisplayMode() == null) {
+		return 0;
+	    }
+	    return Math.max(0, (ECRAN.getDisplayMode().getWidth() - TAILLEX) / 2);
+	}
+
+	private static int calculerDecalageY() {
+	    if (ECRAN == null || !ECRAN.isFullScreenSupported() || ECRAN.getDisplayMode() == null) {
+		return 0;
+	    }
+	    return Math.max(0, (ECRAN.getDisplayMode().getHeight() - TAILLEY) / 2);
 	}
 
 	private static void libererPleinEcranMenu() {

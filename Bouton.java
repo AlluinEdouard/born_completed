@@ -1,10 +1,13 @@
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.File;
+import java.awt.image.BufferedImage;
 
 
 import MG2D.Couleur;
@@ -18,6 +21,7 @@ import MG2D.geometrie.Texte;
  */
 
 public class Bouton {
+    private static final int LARGEUR_MAX_TEXTE_BOUTON = 340;
     private Texte texte;
     private String chemin;
     private String nom;
@@ -76,7 +80,8 @@ public class Bouton {
 		if(!Files.isRegularFile(script)){
 		    continue;
 		}
-		Graphique.tableau[i].setTexte(new Texte(Couleur .NOIR, nomJeu, new Font("Calibri", Font.TYPE1_FONT, 30), new Point(310, 510)));
+		Font policeBouton = new Font("Calibri", Font.PLAIN, 26);
+		Graphique.tableau[i].setTexte(new Texte(Couleur .NOIR, tronquerTexte(nomJeu, policeBouton, LARGEUR_MAX_TEXTE_BOUTON), policeBouton, new Point(300, 510)));
 		Graphique.tableau[i].setTexture(new Texture("img/bouton2.png", new Point(100, 478), 400, 65));
 		for(int j=0;j<Graphique.tableau.length-(i+1);j++){
 		    Graphique.tableau[i].getTexte().translater(0,-110);
@@ -131,5 +136,36 @@ public class Bouton {
 
     public void setNumeroDeJeu(int numeroDeJeu) {
 	this.numeroDeJeu = numeroDeJeu;
+    }
+
+    private static String tronquerTexte(String texte, Font police, int largeurMax){
+	if(texte == null){
+	    return "";
+	}
+
+	BufferedImage imageMesure = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+	Graphics2D graphics = imageMesure.createGraphics();
+	try{
+	    FontMetrics metrics = graphics.getFontMetrics(police);
+	    if(metrics.stringWidth(texte) <= largeurMax){
+		return texte;
+	    }
+	    String suffixe = "...";
+	    int largeurSuffixe = metrics.stringWidth(suffixe);
+	    if(largeurSuffixe >= largeurMax){
+		return suffixe;
+	    }
+	    StringBuilder resultat = new StringBuilder();
+	    for(int i = 0 ; i < texte.length() ; i++){
+		char c = texte.charAt(i);
+		if(metrics.stringWidth(resultat.toString() + c) + largeurSuffixe > largeurMax){
+		    break;
+		}
+		resultat.append(c);
+	    }
+	    return resultat.toString() + suffixe;
+	} finally {
+	    graphics.dispose();
+	}
     }
 }
